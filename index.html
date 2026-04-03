@@ -1,0 +1,1733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Happy Birthday! 생일 축하해요</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0a0a;
+    font-family: 'Courier New', monospace;
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  /* ===== PHASE 1: TERMINAL ===== */
+  #terminal-phase {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #1a1a2e;
+    z-index: 100;
+    transition: opacity 1.2s ease;
+  }
+  #terminal-phase.fade-out {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .terminal-window {
+    width: min(820px, 96vw);
+    max-height: 90vh;
+    background: #1e1f29;
+    border-radius: 12px;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.07);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .terminal-titlebar {
+    background: #2d2e3a;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .dot {
+    width: 13px; height: 13px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .dot.red    { background: #ff5f57; box-shadow: 0 0 6px #ff5f5780; }
+  .dot.yellow { background: #febc2e; box-shadow: 0 0 6px #febc2e80; }
+  .dot.green  { background: #28c840; box-shadow: 0 0 6px #28c84080; }
+  .terminal-title {
+    flex: 1;
+    text-align: center;
+    font-size: 13px;
+    color: #8b8b9e;
+    letter-spacing: 0.3px;
+  }
+
+  .terminal-body {
+    padding: 18px 22px;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+    scrollbar-width: thin;
+    scrollbar-color: #44445a #1e1f29;
+  }
+
+  .terminal-line {
+    font-size: 13.5px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+  .prompt    { color: #50fa7b; }
+  .cmd       { color: #f8f8f2; }
+  .output    { color: #8be9fd; }
+  .success   { color: #50fa7b; }
+  .warning   { color: #ffb86c; }
+  .error     { color: #ff5555; }
+  .purple    { color: #bd93f9; }
+  .pink      { color: #ff79c6; }
+  .yellow    { color: #f1fa8c; }
+  .white     { color: #f8f8f2; }
+  .dim       { color: #6272a4; }
+  .ascii-box { color: #f1fa8c; font-weight: bold; }
+  .cursor {
+    display: inline-block;
+    width: 8px; height: 15px;
+    background: #50fa7b;
+    vertical-align: text-bottom;
+    animation: blink 1s step-end infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .progress-bar-line {
+    color: #bd93f9;
+    font-size: 13.5px;
+    line-height: 1.7;
+  }
+
+  /* ===== PHASE 2: BIRTHDAY SCENE ===== */
+  #birthday-phase {
+    position: fixed;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 1.5s ease;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  #birthday-phase.visible {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  /* Room */
+  .room {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    background: radial-gradient(ellipse at 50% 30%, #2d1a0e 0%, #1a0d06 60%, #0d0604 100%);
+  }
+
+  /* Ambient warm light */
+  .room::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 40% at 50% 70%, rgba(255,140,50,0.08) 0%, transparent 70%),
+      radial-gradient(ellipse 30% 20% at 35% 72%, rgba(255,200,100,0.06) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Wall */
+  .wall {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 62%;
+    background: linear-gradient(180deg, #1c0f07 0%, #2a1508 60%, #3a1e0a 100%);
+    overflow: hidden;
+  }
+  .wall::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      90deg,
+      transparent 0px,
+      transparent 39px,
+      rgba(0,0,0,0.15) 39px,
+      rgba(0,0,0,0.15) 40px
+    ), repeating-linear-gradient(
+      0deg,
+      transparent 0px,
+      transparent 39px,
+      rgba(0,0,0,0.12) 39px,
+      rgba(0,0,0,0.12) 40px
+    );
+    opacity: 0.4;
+  }
+
+  /* Floor */
+  .floor {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 38%;
+    background: linear-gradient(180deg, #2a1508 0%, #1e0f05 100%);
+    overflow: hidden;
+  }
+  .floor::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      90deg,
+      transparent 0px,
+      transparent 79px,
+      rgba(0,0,0,0.2) 79px,
+      rgba(0,0,0,0.2) 80px
+    );
+    opacity: 0.5;
+  }
+
+  /* Title text */
+  .birthday-title {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    z-index: 10;
+    pointer-events: none;
+  }
+  .birthday-title h1 {
+    font-family: Georgia, serif;
+    font-size: clamp(22px, 4vw, 40px);
+    color: #ffd700;
+    text-shadow:
+      0 0 20px rgba(255,215,0,0.8),
+      0 0 40px rgba(255,165,0,0.5),
+      0 0 80px rgba(255,100,0,0.3);
+    letter-spacing: 3px;
+    animation: titlePulse 3s ease-in-out infinite;
+  }
+  .birthday-title p {
+    font-family: Georgia, serif;
+    font-size: clamp(11px, 1.8vw, 16px);
+    color: #ffcc66;
+    text-shadow: 0 0 10px rgba(255,200,80,0.6);
+    margin-top: 4px;
+    letter-spacing: 1px;
+  }
+  @keyframes titlePulse {
+    0%, 100% { text-shadow: 0 0 20px rgba(255,215,0,0.8), 0 0 40px rgba(255,165,0,0.5), 0 0 80px rgba(255,100,0,0.3); }
+    50% { text-shadow: 0 0 30px rgba(255,215,0,1), 0 0 60px rgba(255,165,0,0.8), 0 0 100px rgba(255,100,0,0.5); }
+  }
+
+  /* ===== WINDOW ===== */
+  .window-frame {
+    position: absolute;
+    top: 8%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: clamp(240px, 38vw, 420px);
+    height: clamp(160px, 26vw, 290px);
+    z-index: 5;
+  }
+
+  .window-outer {
+    width: 100%;
+    height: 100%;
+    background: #3d2008;
+    border-radius: 4px;
+    padding: 10px;
+    box-shadow:
+      inset 0 2px 8px rgba(0,0,0,0.6),
+      0 4px 20px rgba(0,0,0,0.8),
+      0 0 0 2px #5a3010,
+      inset 0 0 0 2px #6b3a14;
+    position: relative;
+  }
+
+  .window-glass {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+    border-radius: 2px;
+  }
+
+  /* Columbia sunset sky */
+  .window-sky {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      180deg,
+      #1a0a2e 0%,
+      #2d1550 15%,
+      #6b2d6b 30%,
+      #c44d28 50%,
+      #e8761a 65%,
+      #f5a623 78%,
+      #fdd97a 90%,
+      #ffe8a0 100%
+    );
+  }
+
+  /* Stars */
+  .star {
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    animation: twinkle 2s ease-in-out infinite;
+  }
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.9; }
+    50% { opacity: 0.3; }
+  }
+
+  /* Sun glow */
+  .sun-glow {
+    position: absolute;
+    bottom: 35%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 40px;
+    background: radial-gradient(circle, #fffde0 0%, #ffd700 30%, #ff8c00 60%, transparent 80%);
+    border-radius: 50%;
+    opacity: 0.7;
+  }
+
+  /* Columbia buildings */
+  .columbia-scene {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 70%;
+  }
+
+  /* Lawn */
+  .campus-lawn {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 28%;
+    background: linear-gradient(180deg, #1a3a10 0%, #0f2a08 100%);
+  }
+  .campus-lawn::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, #2d5a18, #3a7020, #2d5a18, transparent);
+  }
+
+  /* Low Memorial Library - main dome */
+  .low-library {
+    position: absolute;
+    bottom: 26%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 55%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .low-dome {
+    width: 38%;
+    height: 0;
+    padding-bottom: 19%;
+    background: radial-gradient(ellipse at 50% 100%, #2a2a4a 0%, #1a1a3a 60%, #0f0f28 100%);
+    border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+    position: relative;
+    box-shadow: inset -3px 0 8px rgba(0,0,0,0.5), 0 0 15px rgba(100,80,200,0.2);
+  }
+  .low-drum {
+    width: 42%;
+    height: 8px;
+    background: linear-gradient(90deg, #1a1a3a, #2a2a4a, #1a1a3a);
+  }
+  .low-colonnade {
+    width: 90%;
+    height: 28px;
+    background: linear-gradient(180deg, #1e1e38 0%, #14142a 100%);
+    position: relative;
+    display: flex;
+    align-items: stretch;
+    overflow: hidden;
+  }
+  .low-colonnade::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      90deg,
+      transparent 0px,
+      transparent 4px,
+      rgba(0,0,0,0.4) 4px,
+      rgba(0,0,0,0.4) 5px
+    );
+  }
+  .low-steps {
+    width: 95%;
+    height: 8px;
+    background: linear-gradient(180deg, #16162c 0%, #0e0e20 100%);
+  }
+  .low-base {
+    width: 100%;
+    height: 20px;
+    background: linear-gradient(180deg, #12122a 0%, #0a0a1e 100%);
+  }
+
+  /* Side buildings */
+  .side-building {
+    position: absolute;
+    bottom: 26%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .building-body {
+    background: linear-gradient(180deg, #1a1a2e 0%, #12122a 100%);
+    box-shadow: inset -2px 0 6px rgba(0,0,0,0.4);
+  }
+  .building-roof {
+    width: 0;
+    height: 0;
+    border-style: solid;
+  }
+  .window-pane-small {
+    width: 5px;
+    height: 7px;
+    background: rgba(255,200,50,0.5);
+    border: 1px solid rgba(255,150,0,0.3);
+    box-shadow: 0 0 4px rgba(255,200,50,0.4);
+    margin: 1px;
+    border-radius: 1px;
+  }
+  .building-windows {
+    display: flex;
+    gap: 2px;
+    padding: 2px;
+  }
+
+  /* Trees */
+  .tree {
+    position: absolute;
+    bottom: 26%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .tree-trunk {
+    background: #1a0e08;
+    border-radius: 1px;
+  }
+  .tree-top {
+    background: radial-gradient(ellipse, #1a3a10 0%, #0f2206 80%);
+    border-radius: 50% 50% 40% 40%;
+  }
+
+  /* Window dividers */
+  .window-divider-h {
+    position: absolute;
+    left: 0; right: 0;
+    top: 50%;
+    height: 8px;
+    background: linear-gradient(180deg, #5a3010, #7a4018, #5a3010);
+    transform: translateY(-50%);
+    z-index: 3;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  }
+  .window-divider-v {
+    position: absolute;
+    top: 0; bottom: 0;
+    left: 50%;
+    width: 8px;
+    background: linear-gradient(90deg, #5a3010, #7a4018, #5a3010);
+    transform: translateX(-50%);
+    z-index: 3;
+    box-shadow: 2px 0 4px rgba(0,0,0,0.5);
+  }
+
+  /* Window reflection */
+  .window-reflection {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      135deg,
+      rgba(255,255,255,0.06) 0%,
+      transparent 40%,
+      transparent 60%,
+      rgba(255,255,255,0.02) 100%
+    );
+    pointer-events: none;
+    z-index: 4;
+  }
+
+  /* ===== TABLE ===== */
+  .table {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 32%;
+    z-index: 6;
+  }
+
+  .table-surface {
+    position: absolute;
+    top: 0;
+    left: -2%;
+    right: -2%;
+    height: 22px;
+    background: linear-gradient(180deg, #4a2506 0%, #3a1c04 50%, #2e1503 100%);
+    box-shadow:
+      0 4px 20px rgba(0,0,0,0.8),
+      0 0 0 1px #5a3008,
+      inset 0 1px 0 rgba(255,255,255,0.1),
+      inset 0 -1px 0 rgba(0,0,0,0.5);
+    z-index: 7;
+  }
+  .table-surface::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      90deg,
+      transparent 0px,
+      transparent 29px,
+      rgba(0,0,0,0.1) 29px,
+      rgba(0,0,0,0.1) 30px
+    );
+    border-radius: 2px;
+  }
+  .table-body {
+    position: absolute;
+    top: 22px;
+    left: 0; right: 0; bottom: 0;
+    background: linear-gradient(180deg, #2a1404 0%, #1a0d02 100%);
+  }
+  /* Table ambient glow from candles */
+  .table-glow {
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    height: 60px;
+    background: radial-gradient(ellipse, rgba(255,180,50,0.12) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 8;
+    animation: glowPulse 2s ease-in-out infinite;
+  }
+  @keyframes glowPulse {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 1.2; }
+  }
+
+  /* ===== CAKE ===== */
+  .cake-wrapper {
+    position: absolute;
+    top: -160px;
+    left: clamp(60px, 18%, 220px);
+    width: 200px;
+    height: 200px;
+    z-index: 9;
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .cake-wrapper:active { cursor: grabbing; }
+  .cake-hint {
+    position: absolute;
+    bottom: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: rgba(255,220,100,0.5);
+    font-size: 11px;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  .cake-scene {
+    width: 200px;
+    height: 200px;
+    position: relative;
+    transform-style: preserve-3d;
+    perspective: 800px;
+  }
+
+  .cake-3d {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    transform-style: preserve-3d;
+    animation: cakeAutoRotate 12s linear infinite;
+  }
+  .cake-3d.dragging {
+    animation: none;
+  }
+
+  @keyframes cakeAutoRotate {
+    from { transform: translateX(-50%) rotateY(0deg); }
+    to   { transform: translateX(-50%) rotateY(360deg); }
+  }
+
+  .cake-tier {
+    position: relative;
+    margin: 0 auto;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: visible;
+  }
+
+  .tier-body {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 50%;
+    overflow: hidden;
+  }
+
+  /* Bottom tier - pink/strawberry */
+  .tier-bottom {
+    width: 180px;
+    height: 70px;
+  }
+  .tier-bottom .tier-body {
+    width: 180px;
+    height: 70px;
+    background: linear-gradient(90deg,
+      #8b2252 0%,
+      #c44b7a 15%,
+      #e8739e 35%,
+      #f5a0bf 50%,
+      #e8739e 65%,
+      #c44b7a 85%,
+      #8b2252 100%
+    );
+  }
+  .tier-bottom .tier-body::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(255,255,255,0.1) 0%, transparent 40%, rgba(0,0,0,0.2) 100%);
+  }
+
+  /* Middle tier - light blue */
+  .tier-middle {
+    width: 130px;
+    height: 60px;
+    margin-bottom: -1px;
+  }
+  .tier-middle .tier-body {
+    width: 130px;
+    height: 60px;
+    background: linear-gradient(90deg,
+      #1a4a6b 0%,
+      #2a7ab5 15%,
+      #4ca3d9 35%,
+      #7ec8f0 50%,
+      #4ca3d9 65%,
+      #2a7ab5 85%,
+      #1a4a6b 100%
+    );
+  }
+  .tier-middle .tier-body::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(255,255,255,0.12) 0%, transparent 40%, rgba(0,0,0,0.2) 100%);
+  }
+
+  /* Top tier - yellow */
+  .tier-top {
+    width: 85px;
+    height: 50px;
+    margin-bottom: -1px;
+  }
+  .tier-top .tier-body {
+    width: 85px;
+    height: 50px;
+    background: linear-gradient(90deg,
+      #7a6000 0%,
+      #c4a010 15%,
+      #e8c840 35%,
+      #fae070 50%,
+      #e8c840 65%,
+      #c4a010 85%,
+      #7a6000 100%
+    );
+  }
+  .tier-top .tier-body::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, transparent 40%, rgba(0,0,0,0.2) 100%);
+  }
+
+  /* Tier top ellipse (frosting) */
+  .tier-top-ellipse {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 50%;
+    top: -8px;
+    z-index: 2;
+  }
+  .tier-bottom .tier-top-ellipse {
+    width: 180px; height: 22px;
+    background: radial-gradient(ellipse at 40% 40%, #fff 0%, #f0d0e0 40%, #e0a8c0 70%, #c87898 100%);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+  .tier-middle .tier-top-ellipse {
+    width: 130px; height: 18px;
+    background: radial-gradient(ellipse at 40% 40%, #fff 0%, #d0e8f8 40%, #a8d0f0 70%, #78b0d8 100%);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  }
+  .tier-top .tier-top-ellipse {
+    width: 85px; height: 14px;
+    background: radial-gradient(ellipse at 40% 40%, #fff 0%, #f8f0c0 40%, #f0e090 70%, #d8c050 100%);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+  }
+
+  /* Tier text */
+  .tier-text {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    z-index: 3;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    pointer-events: none;
+  }
+  .tier-bottom .tier-text {
+    font-size: 10px;
+    font-family: Georgia, serif;
+    color: #fff0f5;
+    bottom: 12px;
+    text-shadow: 0 0 8px rgba(255,150,180,0.8), 0 1px 2px rgba(0,0,0,0.5);
+  }
+  .tier-middle .tier-text {
+    font-size: 8px;
+    font-family: Georgia, serif;
+    color: #e8f8ff;
+    bottom: 10px;
+    text-shadow: 0 0 6px rgba(100,200,255,0.8), 0 1px 2px rgba(0,0,0,0.5);
+  }
+  .tier-top .tier-text {
+    font-size: 7px;
+    font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+    color: #fffce0;
+    bottom: 8px;
+    text-shadow: 0 0 6px rgba(255,240,100,0.8), 0 1px 2px rgba(0,0,0,0.5);
+  }
+
+  /* Candles */
+  .candles-row {
+    position: absolute;
+    top: -45px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 14px;
+    z-index: 5;
+  }
+  .candle {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .candle-flame {
+    width: 8px;
+    height: 14px;
+    position: relative;
+    margin-bottom: 1px;
+  }
+  .flame-inner {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 5px;
+    height: 10px;
+    background: radial-gradient(ellipse at 50% 80%, #fff 0%, #ffee00 40%, #ff8c00 80%, transparent 100%);
+    border-radius: 50% 50% 30% 30%;
+    animation: flicker 0.15s ease-in-out infinite alternate;
+    transform-origin: bottom center;
+  }
+  .flame-outer {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 8px;
+    height: 14px;
+    background: radial-gradient(ellipse at 50% 80%, rgba(255,200,0,0.6) 0%, rgba(255,100,0,0.4) 50%, transparent 80%);
+    border-radius: 50% 50% 30% 30%;
+    animation: flicker2 0.2s ease-in-out infinite alternate;
+    transform-origin: bottom center;
+  }
+  @keyframes flicker {
+    0%  { transform: translateX(-50%) scaleX(1) scaleY(1) rotate(-1deg); }
+    100%{ transform: translateX(-50%) scaleX(0.85) scaleY(1.1) rotate(1.5deg); }
+  }
+  @keyframes flicker2 {
+    0%  { transform: translateX(-50%) scaleX(1) scaleY(1) rotate(1deg); opacity: 0.8; }
+    100%{ transform: translateX(-50%) scaleX(1.1) scaleY(0.95) rotate(-1deg); opacity: 1; }
+  }
+  .candle-body {
+    width: 7px;
+    height: 24px;
+    border-radius: 2px 2px 1px 1px;
+    position: relative;
+  }
+  .candle-body::after {
+    content: '';
+    position: absolute;
+    top: 0; bottom: 0;
+    left: 15%;
+    width: 20%;
+    background: rgba(255,255,255,0.25);
+    border-radius: 2px;
+  }
+  .candle-wax {
+    width: 9px;
+    height: 4px;
+    border-radius: 50%;
+    margin-top: -1px;
+  }
+
+  /* Candle colors */
+  .candle:nth-child(1) .candle-body { background: linear-gradient(90deg, #8b0000, #cc2244, #ee4466, #cc2244, #8b0000); }
+  .candle:nth-child(1) .candle-wax  { background: radial-gradient(ellipse, #ff8899, #cc2244); }
+  .candle:nth-child(2) .candle-body { background: linear-gradient(90deg, #006644, #009966, #00cc88, #009966, #006644); }
+  .candle:nth-child(2) .candle-wax  { background: radial-gradient(ellipse, #88ffcc, #009966); }
+  .candle:nth-child(3) .candle-body { background: linear-gradient(90deg, #440088, #7722bb, #aa44ee, #7722bb, #440088); }
+  .candle:nth-child(3) .candle-wax  { background: radial-gradient(ellipse, #ddaaff, #7722bb); }
+
+  /* Candle glow on cake */
+  .candle-glow {
+    position: absolute;
+    top: -60px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 80px;
+    background: radial-gradient(ellipse, rgba(255,200,80,0.25) 0%, transparent 70%);
+    pointer-events: none;
+    animation: glowPulse 1.8s ease-in-out infinite;
+    z-index: 4;
+  }
+
+  /* ===== GRADUATION PHOTO ===== */
+  .photo-wrapper {
+    position: absolute;
+    top: -200px;
+    right: clamp(40px, 14%, 180px);
+    width: clamp(140px, 22vw, 200px);
+    height: clamp(175px, 27.5vw, 250px);
+    z-index: 9;
+  }
+
+  .photo-frame {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #c8960c 0%, #f5d45e 20%, #b8780a 40%, #e8c040 60%, #c8960c 80%, #f0d050 100%);
+    border-radius: 4px;
+    padding: 10px;
+    box-shadow:
+      0 8px 32px rgba(0,0,0,0.7),
+      inset 0 0 0 3px rgba(255,220,80,0.3),
+      inset 0 0 0 1px rgba(200,150,10,0.8);
+    position: relative;
+  }
+
+  /* Ornate frame corners */
+  .frame-corner {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background: radial-gradient(circle at 50%, #ffd700 0%, #c8960c 60%);
+    border-radius: 50%;
+    box-shadow: 0 0 6px rgba(255,215,0,0.5);
+  }
+  .frame-corner.tl { top: 4px; left: 4px; }
+  .frame-corner.tr { top: 4px; right: 4px; }
+  .frame-corner.bl { bottom: 4px; left: 4px; }
+  .frame-corner.br { bottom: 4px; right: 4px; }
+
+  .photo-inner {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(180deg, #4a9fd4 0%, #2a7ab5 40%, #1a5a8a 60%, #3a8020 70%, #2a6010 100%);
+    border-radius: 2px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Photo background - Columbia campus */
+  .photo-bg-sky {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 62%;
+    background: linear-gradient(180deg, #1a6aaa 0%, #4a9fd4 50%, #78c0e8 100%);
+  }
+  .photo-bg-building {
+    position: absolute;
+    bottom: 28%;
+    left: 15%;
+    right: 15%;
+    height: 30%;
+    background: linear-gradient(180deg, #d4c8a0 0%, #c0b480 100%);
+    border-radius: 1px;
+    overflow: hidden;
+  }
+  .photo-bg-building::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 30%;
+    height: 8px;
+    background: radial-gradient(ellipse at 50% 100%, #a09060 0%, #80703a 100%);
+    border-radius: 50% 50% 0 0;
+  }
+  .photo-bg-lawn {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 30%;
+    background: linear-gradient(180deg, #3a8030 0%, #2a6020 100%);
+  }
+
+  /* Graduation figure */
+  .grad-figure {
+    position: absolute;
+    bottom: 22%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 45%;
+    height: 65%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* Cap */
+  .grad-cap {
+    position: relative;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: -2px;
+    z-index: 3;
+  }
+  .cap-board {
+    width: 95%;
+    height: 6px;
+    background: linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%);
+    border-radius: 1px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    position: relative;
+    z-index: 2;
+  }
+  .cap-board::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.05) 50%, transparent 100%);
+  }
+  .cap-top {
+    width: 85%;
+    height: 9px;
+    background: linear-gradient(180deg, #111 0%, #000 100%);
+    border-radius: 1px 1px 0 0;
+    position: relative;
+    z-index: 1;
+  }
+  .cap-tassel {
+    position: absolute;
+    right: 8%;
+    top: 0;
+    width: 2px;
+    height: 16px;
+    background: linear-gradient(180deg, #c8960c 0%, #f5d45e 50%, #c8960c 100%);
+    transform-origin: top center;
+    animation: tassleSwing 3s ease-in-out infinite;
+  }
+  .cap-tassel::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: -2px;
+    width: 6px;
+    height: 6px;
+    background: #f5d45e;
+    border-radius: 50%;
+  }
+  @keyframes tassleSwing {
+    0%, 100% { transform: rotate(-10deg); }
+    50% { transform: rotate(10deg); }
+  }
+
+  /* Face */
+  .grad-face {
+    width: 52%;
+    height: 0;
+    padding-bottom: 56%;
+    position: relative;
+    border-radius: 45% 45% 50% 50%;
+    background: linear-gradient(180deg, #e8a87c 0%, #d4855a 100%);
+    box-shadow: inset -2px 2px 4px rgba(0,0,0,0.2);
+    z-index: 2;
+  }
+  .grad-face::before {
+    content: '';
+    position: absolute;
+    top: 15%;
+    left: 20%;
+    width: 22%;
+    height: 12%;
+    background: #1a1a1a;
+    border-radius: 50%;
+    box-shadow: 28% 0 0 0 #1a1a1a;
+  }
+  .grad-face::after {
+    content: '';
+    position: absolute;
+    top: 55%;
+    left: 30%;
+    width: 40%;
+    height: 8%;
+    background: #c07050;
+    border-radius: 0 0 50% 50%;
+    border-top: 1px solid rgba(0,0,0,0.1);
+  }
+  /* Hair */
+  .grad-hair {
+    position: absolute;
+    top: -3px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 52%;
+    z-index: 3;
+  }
+  .grad-hair::before {
+    content: '';
+    display: block;
+    width: 100%;
+    height: 0;
+    padding-bottom: 30%;
+    background: linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 100%);
+    border-radius: 50% 50% 0 0;
+  }
+
+  /* Gown */
+  .grad-gown {
+    width: 90%;
+    flex: 1;
+    background: linear-gradient(180deg, #1a1a2a 0%, #0e0e1e 100%);
+    border-radius: 4px 4px 8px 8px;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+    margin-top: -1px;
+  }
+  .grad-gown::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 30%;
+    height: 100%;
+    background: linear-gradient(180deg, #003087 0%, #0044aa 30%, #003087 100%);
+  }
+  /* Columbia blue sash */
+  .grad-sash {
+    position: absolute;
+    top: 0;
+    left: 20%;
+    width: 12%;
+    height: 100%;
+    background: linear-gradient(180deg, #003087 0%, #0055cc 50%, #003087 100%);
+    transform: skewX(-3deg);
+  }
+  .grad-sash-2 {
+    position: absolute;
+    top: 0;
+    right: 20%;
+    width: 12%;
+    height: 100%;
+    background: linear-gradient(180deg, #003087 0%, #0055cc 50%, #003087 100%);
+    transform: skewX(3deg);
+  }
+
+  /* Photo label */
+  .photo-label {
+    position: absolute;
+    bottom: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: Georgia, serif;
+    font-size: clamp(6px, 1vw, 8px);
+    color: #ffd700;
+    text-shadow: 0 0 4px rgba(255,200,0,0.6);
+    white-space: nowrap;
+    letter-spacing: 1px;
+    z-index: 5;
+  }
+
+  /* ===== CONFETTI ===== */
+  #confetti-canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 20;
+  }
+
+  /* ===== HINT TEXT ===== */
+  .hint-text {
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: rgba(255,200,100,0.4);
+    font-size: 12px;
+    letter-spacing: 1px;
+    pointer-events: none;
+    z-index: 15;
+    white-space: nowrap;
+    animation: hintFade 4s ease-in-out infinite;
+  }
+  @keyframes hintFade {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.8; }
+  }
+
+  /* Candle light flicker overlay on room */
+  .candle-light-overlay {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 50% 30% at 35% 68%, rgba(255,180,60,0.06) 0%, transparent 70%);
+    animation: lightFlicker 0.2s ease-in-out infinite alternate;
+    pointer-events: none;
+    z-index: 2;
+  }
+  @keyframes lightFlicker {
+    0%  { opacity: 0.8; }
+    100%{ opacity: 1.0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Phase 1: Terminal -->
+<div id="terminal-phase">
+  <div class="terminal-window">
+    <div class="terminal-titlebar">
+      <div class="dot red"></div>
+      <div class="dot yellow"></div>
+      <div class="dot green"></div>
+      <div class="terminal-title">bash — 82×28</div>
+    </div>
+    <div class="terminal-body" id="terminal-body">
+      <span class="cursor" id="cursor"></span>
+    </div>
+  </div>
+</div>
+
+<!-- Phase 2: Birthday Scene -->
+<div id="birthday-phase">
+  <div class="room">
+    <div class="candle-light-overlay"></div>
+    <div class="wall"></div>
+    <div class="floor"></div>
+
+    <!-- Title -->
+    <div class="birthday-title">
+      <h1>✦ HAPPY BIRTHDAY! ✦</h1>
+      <p>축하해요 ✨ Congratulations on graduating from Columbia ✨</p>
+    </div>
+
+    <!-- Window -->
+    <div class="window-frame">
+      <div class="window-outer">
+        <div class="window-glass">
+          <!-- Sky -->
+          <div class="window-sky">
+            <!-- Stars -->
+            <div class="star" style="width:2px;height:2px;top:5%;left:10%;animation-delay:0s;"></div>
+            <div class="star" style="width:2px;height:2px;top:8%;left:25%;animation-delay:0.4s;"></div>
+            <div class="star" style="width:3px;height:3px;top:4%;left:45%;animation-delay:0.8s;"></div>
+            <div class="star" style="width:2px;height:2px;top:10%;left:65%;animation-delay:1.2s;"></div>
+            <div class="star" style="width:2px;height:2px;top:6%;left:80%;animation-delay:0.3s;"></div>
+            <div class="star" style="width:1px;height:1px;top:12%;left:55%;animation-delay:1.6s;"></div>
+            <div class="star" style="width:1px;height:1px;top:3%;left:35%;animation-delay:0.9s;"></div>
+            <!-- Sun -->
+            <div class="sun-glow"></div>
+          </div>
+
+          <!-- Columbia scene -->
+          <div class="columbia-scene">
+            <!-- Campus lawn -->
+            <div class="campus-lawn"></div>
+
+            <!-- Left side building -->
+            <div class="side-building" style="left:2%;bottom:24%;">
+              <div class="building-roof" style="border-width:0 14px 12px 14px;border-color:transparent transparent #0f0f20 transparent;"></div>
+              <div class="building-body" style="width:28px;height:42px;">
+                <div class="building-windows">
+                  <div class="window-pane-small" style="opacity:0.8;"></div>
+                  <div class="window-pane-small" style="opacity:0.5;"></div>
+                </div>
+                <div class="building-windows" style="margin-top:2px;">
+                  <div class="window-pane-small"></div>
+                  <div class="window-pane-small" style="opacity:0.3;"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Left tree 1 -->
+            <div class="tree" style="left:18%;bottom:25%;">
+              <div class="tree-top" style="width:22px;height:30px;"></div>
+              <div class="tree-trunk" style="width:5px;height:12px;"></div>
+            </div>
+
+            <!-- Left tree 2 -->
+            <div class="tree" style="left:26%;bottom:25%;">
+              <div class="tree-top" style="width:18px;height:24px;"></div>
+              <div class="tree-trunk" style="width:4px;height:10px;"></div>
+            </div>
+
+            <!-- Low Memorial Library (center) -->
+            <div class="low-library">
+              <div class="low-dome"></div>
+              <div class="low-drum"></div>
+              <div class="low-colonnade"></div>
+              <div class="low-steps"></div>
+              <div class="low-base"></div>
+            </div>
+
+            <!-- Right tree 1 -->
+            <div class="tree" style="right:26%;bottom:25%;">
+              <div class="tree-top" style="width:18px;height:24px;"></div>
+              <div class="tree-trunk" style="width:4px;height:10px;"></div>
+            </div>
+
+            <!-- Right tree 2 -->
+            <div class="tree" style="right:18%;bottom:25%;">
+              <div class="tree-top" style="width:22px;height:30px;"></div>
+              <div class="tree-trunk" style="width:5px;height:12px;"></div>
+            </div>
+
+            <!-- Right side building -->
+            <div class="side-building" style="right:2%;bottom:24%;">
+              <div class="building-roof" style="border-width:0 16px 14px 16px;border-color:transparent transparent #10102a transparent;"></div>
+              <div class="building-body" style="width:32px;height:50px;">
+                <div class="building-windows">
+                  <div class="window-pane-small" style="opacity:0.6;"></div>
+                  <div class="window-pane-small" style="opacity:0.9;"></div>
+                </div>
+                <div class="building-windows" style="margin-top:2px;">
+                  <div class="window-pane-small" style="opacity:0.3;"></div>
+                  <div class="window-pane-small"></div>
+                </div>
+                <div class="building-windows" style="margin-top:2px;">
+                  <div class="window-pane-small" style="opacity:0.7;"></div>
+                  <div class="window-pane-small" style="opacity:0.4;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Window pane dividers -->
+          <div class="window-divider-h"></div>
+          <div class="window-divider-v"></div>
+          <!-- Reflection -->
+          <div class="window-reflection"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table">
+      <div class="table-glow"></div>
+      <div class="table-surface"></div>
+      <div class="table-body"></div>
+
+      <!-- Cake -->
+      <div class="cake-wrapper" id="cakeWrapper">
+        <div class="cake-scene">
+          <div class="cake-3d" id="cake3d">
+            <!-- Top tier (yellow) -->
+            <div class="cake-tier tier-top">
+              <div class="tier-top-ellipse"></div>
+              <div class="tier-body"></div>
+              <div class="tier-text">생일 축하해</div>
+              <!-- Candles -->
+              <div class="candles-row">
+                <div class="candle">
+                  <div class="candle-flame">
+                    <div class="flame-outer"></div>
+                    <div class="flame-inner"></div>
+                  </div>
+                  <div class="candle-body"></div>
+                  <div class="candle-wax"></div>
+                </div>
+                <div class="candle">
+                  <div class="candle-flame">
+                    <div class="flame-outer"></div>
+                    <div class="flame-inner"></div>
+                  </div>
+                  <div class="candle-body"></div>
+                  <div class="candle-wax"></div>
+                </div>
+                <div class="candle">
+                  <div class="candle-flame">
+                    <div class="flame-outer"></div>
+                    <div class="flame-inner"></div>
+                  </div>
+                  <div class="candle-body"></div>
+                  <div class="candle-wax"></div>
+                </div>
+              </div>
+            </div>
+            <!-- Middle tier (blue) -->
+            <div class="cake-tier tier-middle">
+              <div class="tier-top-ellipse"></div>
+              <div class="tier-body"></div>
+              <div class="tier-text">Happy Birthday</div>
+            </div>
+            <!-- Bottom tier (pink) -->
+            <div class="cake-tier tier-bottom">
+              <div class="tier-top-ellipse"></div>
+              <div class="tier-body"></div>
+              <div class="tier-text">🎓 Columbia 🎓</div>
+            </div>
+          </div>
+        </div>
+        <div class="cake-hint">← drag to rotate →</div>
+      </div>
+
+      <!-- Graduation Photo -->
+      <div class="photo-wrapper">
+        <div class="photo-frame">
+          <div class="frame-corner tl"></div>
+          <div class="frame-corner tr"></div>
+          <div class="frame-corner bl"></div>
+          <div class="frame-corner br"></div>
+          <div class="photo-inner">
+            <div class="photo-bg-sky"></div>
+            <div class="photo-bg-building"></div>
+            <div class="photo-bg-lawn"></div>
+            <div class="grad-figure">
+              <div class="grad-cap">
+                <div class="cap-board">
+                  <div class="cap-tassel"></div>
+                </div>
+                <div class="cap-top"></div>
+              </div>
+              <div style="position:relative; width:100%; display:flex; justify-content:center;">
+                <div class="grad-hair"></div>
+                <div class="grad-face"></div>
+              </div>
+              <div class="grad-gown">
+                <div class="grad-sash"></div>
+                <div class="grad-sash-2"></div>
+              </div>
+            </div>
+            <div class="photo-label">COLUMBIA 2026</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hint-text">← drag to rotate the cake →</div>
+  </div>
+</div>
+
+<!-- Confetti canvas -->
+<canvas id="confetti-canvas"></canvas>
+
+<script>
+// ============================================================
+// TERMINAL ANIMATION
+// ============================================================
+const terminalBody = document.getElementById('terminal-body');
+const cursor = document.getElementById('cursor');
+
+const lines = [
+  { type: 'prompt', text: 'guest@macbook:~$ ', cmd: 'ssh birthday-server.columbia.edu', delay: 400 },
+  { type: 'output', text: 'Connecting to birthday-server.columbia.edu...', delay: 300 },
+  { type: 'output', text: 'Welcome to Columbia Birthday Server v2.0.26', delay: 200, color: 'purple' },
+  { type: 'output', text: 'Last login: Fri Mar 20 2026 from 128.59.xx.xx', delay: 200, color: 'dim' },
+  { type: 'blank', delay: 250 },
+  { type: 'prompt', text: 'birthday@columbia:~$ ', cmd: 'ls celebrations/', delay: 500 },
+  { type: 'output', text: 'drwxr-xr-x  confetti/       birthday_cake.sh   candles.py', delay: 150, color: 'output' },
+  { type: 'output', text: 'drwxr-xr-x  grad_photos/    columbia_campus.svg balloons.js', delay: 150, color: 'output' },
+  { type: 'output', text: '-rwxr-xr-x  birthday.sh     memories.tar.gz     wishes.txt', delay: 150, color: 'output' },
+  { type: 'blank', delay: 200 },
+  { type: 'prompt', text: 'birthday@columbia:~$ ', cmd: './birthday.sh --name="친구" --milestone="Columbia" --year=2026', delay: 600 },
+  { type: 'output', text: '✓ Parsing parameters...', delay: 200, color: 'success' },
+  { type: 'output', text: '✓ Loading celebration config...', delay: 200, color: 'success' },
+  { type: 'blank', delay: 150 },
+  { type: 'progress', label: 'Initializing confetti engine', delay: 100 },
+  { type: 'progress', label: 'Baking 3-tier birthday cake   ', delay: 100 },
+  { type: 'progress', label: 'Rendering Columbia campus     ', delay: 100 },
+  { type: 'progress', label: 'Loading graduation photo      ', delay: 100 },
+  { type: 'progress', label: 'Lighting birthday candles     ', delay: 100 },
+  { type: 'blank', delay: 200 },
+  { type: 'output', text: '✓ All systems nominal. Launching birthday sequence...', delay: 300, color: 'success' },
+  { type: 'blank', delay: 200 },
+  { type: 'ascii', delay: 300 },
+  { type: 'blank', delay: 400 },
+  { type: 'output', text: '  → Transition to birthday scene in 3...', delay: 500, color: 'yellow' },
+  { type: 'output', text: '  → Transition to birthday scene in 2...', delay: 600, color: 'yellow' },
+  { type: 'output', text: '  → Transition to birthday scene in 1...', delay: 600, color: 'yellow' },
+];
+
+const asciiArt = [
+  '  ╔══════════════════════════════════════════════════╗',
+  '  ║                                                  ║',
+  '  ║   🎂  HAPPY BIRTHDAY!  생일 축하해요  🎂          ║',
+  '  ║                                                  ║',
+  '  ║   🎓  Congratulations on Columbia!  🎓           ║',
+  '  ║                                                  ║',
+  '  ║     Class of 2026  •  Dreams achieved  ✨         ║',
+  '  ║                                                  ║',
+  '  ╚══════════════════════════════════════════════════╝',
+];
+
+function createLine(content, className) {
+  const div = document.createElement('div');
+  div.className = 'terminal-line ' + (className || '');
+  div.innerHTML = content;
+  terminalBody.insertBefore(div, cursor);
+  terminalBody.scrollTop = terminalBody.scrollHeight;
+  return div;
+}
+
+function typeText(element, text, speed) {
+  return new Promise(resolve => {
+    let i = 0;
+    function type() {
+      if (i < text.length) {
+        element.innerHTML += text[i] === '<' ? text[i] : text[i];
+        i++;
+        setTimeout(type, speed + Math.random() * 20);
+      } else {
+        resolve();
+      }
+    }
+    type();
+  });
+}
+
+function animateProgress(label) {
+  return new Promise(resolve => {
+    const div = document.createElement('div');
+    div.className = 'progress-bar-line';
+    terminalBody.insertBefore(div, cursor);
+
+    const totalWidth = 28;
+    let filled = 0;
+    const colors = ['#50fa7b', '#bd93f9', '#ff79c6', '#8be9fd', '#f1fa8c'];
+    const color = colors[Math.floor(Math.random() * colors.length)];
+
+    const interval = setInterval(() => {
+      filled += Math.floor(Math.random() * 4) + 2;
+      if (filled >= totalWidth) filled = totalWidth;
+
+      const bar = '█'.repeat(filled) + '░'.repeat(totalWidth - filled);
+      const pct = Math.floor((filled / totalWidth) * 100);
+      div.innerHTML = `  <span style="color:#6272a4">${label}</span>  <span style="color:${color}">[${bar}]</span> <span style="color:#f8f8f2">${pct}%</span>`;
+      terminalBody.scrollTop = terminalBody.scrollHeight;
+
+      if (filled >= totalWidth) {
+        clearInterval(interval);
+        setTimeout(() => {
+          div.innerHTML = `  <span style="color:#6272a4">${label}</span>  <span style="color:${color}">[████████████████████████████]</span> <span style="color:#50fa7b">100% ✓</span>`;
+          resolve();
+        }, 150);
+      }
+    }, 40);
+  });
+}
+
+async function runTerminal() {
+  await new Promise(r => setTimeout(r, 500));
+
+  for (const line of lines) {
+    await new Promise(r => setTimeout(r, line.delay || 200));
+
+    if (line.type === 'blank') {
+      createLine('', '');
+    } else if (line.type === 'prompt') {
+      const div = document.createElement('div');
+      div.className = 'terminal-line';
+      div.innerHTML = `<span class="prompt">${line.text}</span><span class="cmd" id="cmd-span"></span>`;
+      terminalBody.insertBefore(div, cursor);
+      const cmdSpan = div.querySelector('#cmd-span');
+      cmdSpan.removeAttribute('id');
+      await typeText(cmdSpan, line.cmd, 45);
+    } else if (line.type === 'output') {
+      createLine(line.text, line.color || 'output');
+    } else if (line.type === 'progress') {
+      await animateProgress(line.label);
+    } else if (line.type === 'ascii') {
+      for (const artLine of asciiArt) {
+        await new Promise(r => setTimeout(r, 50));
+        createLine(artLine, 'ascii-box');
+      }
+    }
+  }
+
+  await new Promise(r => setTimeout(r, 800));
+  transitionToScene();
+}
+
+function transitionToScene() {
+  const termPhase = document.getElementById('terminal-phase');
+  termPhase.classList.add('fade-out');
+
+  const bdPhase = document.getElementById('birthday-phase');
+  bdPhase.classList.add('visible');
+
+  setTimeout(() => {
+    termPhase.style.display = 'none';
+    startConfetti();
+  }, 1300);
+}
+
+runTerminal();
+
+// ============================================================
+// CAKE ROTATION
+// ============================================================
+const cake3d = document.getElementById('cake3d');
+const cakeWrapper = document.getElementById('cakeWrapper');
+
+let isDragging = false;
+let startX = 0;
+let currentRotation = 0;
+let animationId = null;
+let lastDragX = 0;
+let velocity = 0;
+
+function getClientX(e) {
+  return e.touches ? e.touches[0].clientX : e.clientX;
+}
+
+function startDrag(e) {
+  isDragging = true;
+  startX = getClientX(e);
+  lastDragX = startX;
+  velocity = 0;
+  cake3d.classList.add('dragging');
+  // Get current rotation from transform
+  const transform = cake3d.style.transform || '';
+  const match = transform.match(/rotateY\(([^)]+)deg\)/);
+  if (match) currentRotation = parseFloat(match[1]);
+  e.preventDefault();
+}
+
+function onDrag(e) {
+  if (!isDragging) return;
+  const x = getClientX(e);
+  const delta = x - lastDragX;
+  velocity = delta;
+  lastDragX = x;
+  currentRotation += delta * 0.6;
+  cake3d.style.transform = `translateX(-50%) rotateY(${currentRotation}deg)`;
+}
+
+function endDrag() {
+  if (!isDragging) return;
+  isDragging = false;
+  cake3d.classList.remove('dragging');
+  // momentum
+  function momentum() {
+    if (Math.abs(velocity) < 0.3) {
+      // Resume auto-rotate from current position
+      resumeAutoRotate();
+      return;
+    }
+    velocity *= 0.95;
+    currentRotation += velocity * 0.3;
+    cake3d.style.transform = `translateX(-50%) rotateY(${currentRotation}deg)`;
+    animationId = requestAnimationFrame(momentum);
+  }
+  if (animationId) cancelAnimationFrame(animationId);
+  animationId = requestAnimationFrame(momentum);
+}
+
+function resumeAutoRotate() {
+  // Re-enable animation starting from currentRotation
+  // We do this via JS loop instead to maintain continuity
+  let lastTime = null;
+  function autoLoop(ts) {
+    if (isDragging) { animationId = requestAnimationFrame(autoLoop); return; }
+    if (lastTime) {
+      const dt = ts - lastTime;
+      currentRotation += dt * 0.025; // degrees per ms
+      cake3d.style.transform = `translateX(-50%) rotateY(${currentRotation}deg)`;
+    }
+    lastTime = ts;
+    animationId = requestAnimationFrame(autoLoop);
+  }
+  if (animationId) cancelAnimationFrame(animationId);
+  animationId = requestAnimationFrame(autoLoop);
+}
+
+cakeWrapper.addEventListener('mousedown', startDrag);
+cakeWrapper.addEventListener('touchstart', startDrag, { passive: false });
+document.addEventListener('mousemove', onDrag);
+document.addEventListener('touchmove', e => onDrag(e), { passive: false });
+document.addEventListener('mouseup', endDrag);
+document.addEventListener('touchend', endDrag);
+
+// Start auto-rotate after scene visible
+setTimeout(() => {
+  resumeAutoRotate();
+}, 1500);
+
+// ============================================================
+// CONFETTI
+// ============================================================
+const canvas = document.getElementById('confetti-canvas');
+const ctx = canvas.getContext('2d');
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+window.addEventListener('resize', () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+});
+
+const COLORS = [
+  '#ff6b6b', '#ffd700', '#50fa7b', '#8be9fd',
+  '#ff79c6', '#bd93f9', '#ffb86c', '#f1fa8c',
+  '#ff5555', '#00bfff', '#ff69b4', '#adff2f'
+];
+
+const SHAPES = ['rect', 'circle', 'triangle', 'ribbon'];
+
+class ConfettiPiece {
+  constructor() {
+    this.reset(true);
+  }
+
+  reset(initial = false) {
+    this.x = Math.random() * canvas.width;
+    this.y = initial ? Math.random() * canvas.height * -1 : -20;
+    this.size = Math.random() * 8 + 4;
+    this.color = COLORS[Math.floor(Math.random() * COLORS.length)];
+    this.shape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
+    this.vx = (Math.random() - 0.5) * 2;
+    this.vy = Math.random() * 2 + 1.5;
+    this.rotation = Math.random() * Math.PI * 2;
+    this.rotationSpeed = (Math.random() - 0.5) * 0.15;
+    this.opacity = Math.random() * 0.4 + 0.6;
+    this.wobble = Math.random() * Math.PI * 2;
+    this.wobbleSpeed = Math.random() * 0.05 + 0.02;
+    this.scaleX = 1;
+    this.scaleXDir = (Math.random() - 0.5) * 0.05;
+  }
+
+  update() {
+    this.y += this.vy;
+    this.x += this.vx + Math.sin(this.wobble) * 0.8;
+    this.wobble += this.wobbleSpeed;
+    this.rotation += this.rotationSpeed;
+    this.scaleX += this.scaleXDir;
+    if (Math.abs(this.scaleX) < 0.1) this.scaleXDir *= -1;
+    if (this.scaleX > 1) this.scaleX = 1;
+    if (this.y > canvas.height + 20) this.reset();
+  }
+
+  draw() {
+    ctx.save();
+    ctx.globalAlpha = this.opacity;
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.rotation);
+    ctx.scale(this.scaleX, 1);
+    ctx.fillStyle = this.color;
+
+    switch (this.shape) {
+      case 'rect':
+        ctx.fillRect(-this.size / 2, -this.size / 4, this.size, this.size / 2);
+        break;
+      case 'circle':
+        ctx.beginPath();
+        ctx.arc(0, 0, this.size / 2, 0, Math.PI * 2);
+        ctx.fill();
+        break;
+      case 'triangle':
+        ctx.beginPath();
+        ctx.moveTo(0, -this.size / 2);
+        ctx.lineTo(this.size / 2, this.size / 2);
+        ctx.lineTo(-this.size / 2, this.size / 2);
+        ctx.closePath();
+        ctx.fill();
+        break;
+      case 'ribbon':
+        ctx.fillRect(-this.size / 2, -this.size * 0.15, this.size, this.size * 0.3);
+        break;
+    }
+    ctx.restore();
+  }
+}
+
+let pieces = [];
+let confettiRunning = false;
+
+function startConfetti() {
+  if (confettiRunning) return;
+  confettiRunning = true;
+
+  // Create a burst of pieces
+  for (let i = 0; i < 160; i++) {
+    pieces.push(new ConfettiPiece());
+  }
+
+  function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Add new pieces for first 4 seconds
+    if (pieces.length < 250 && Math.random() < 0.3) {
+      pieces.push(new ConfettiPiece());
+    }
+
+    pieces.forEach(p => {
+      p.update();
+      p.draw();
+    });
+
+    // After 8 seconds, slowly remove pieces
+    if (pieces.length > 60 && Math.random() < 0.008) {
+      pieces.splice(Math.floor(Math.random() * pieces.length), 1);
+    }
+
+    requestAnimationFrame(animate);
+  }
+
+  animate();
+}
+</script>
+</body>
+</html>
